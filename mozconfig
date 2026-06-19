@@ -1,0 +1,8 @@
+ac_add_options --with-app-name=MyFox
+ac_add_options --enable-unofficial-branding
+ac_add_options --disable-debug
+ac_add_options --disable-debug-symbols
+ac_add_options --disable-android
+ac_add_options --disable-tests
+ac_add_options --enable-sccache
+mk_add_options MOZ_OBJDIR=./obj-release
