@@ -1,0 +1,50 @@
+name: Build Custom Firefox
+on:
+  push:
+    branches: [ main ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 拉取本仓库补丁配置
+        uses: actions/checkout@v4
+
+      - name: 释放虚拟机磁盘空间
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc
+          docker system prune -af
+
+      - name: 浅克隆Firefox源码（仅最新版本，无历史记录）
+        run: git clone --depth=1 https://github.com/mozilla/gecko-dev.git firefox-src
+
+      - name: 复制配置、补丁到源码目录
+        run: |
+          cp mozconfig firefox-src/.mozconfig
+          cp patches/*.patch firefox-src/
+          cd firefox-src
+
+      - name: 应用自定义补丁
+        run: |
+          cd firefox-src
+          git apply speed.patch
+          git apply rename.patch
+
+      - name: 自动安装编译依赖
+        run: |
+          cd firefox-src
+          ./mach bootstrap --no-interactive
+
+      - name: 编译发行版Firefox
+        run: |
+          cd firefox-src
+          ./mach build
+
+      - name: 打包安装包
+        run: |
+          cd firefox-src
+          ./mach package
+
+      - name: 上传成品到发布页面
+        uses: softprops/action-gh-release@v1
+        with:
+          files: firefox-src/obj-release/dist/*.tar.bz2
